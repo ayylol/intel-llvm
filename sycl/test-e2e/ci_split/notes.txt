@@ -1,0 +1,4 @@
+# DeviceCodeSplit/grf.cpp
+Good example of a file that may not immediately work. Because this compiles 
+over the same %t.out file and runs multiple times, we would have to change this
+to compile multiple files.

@@ -250,6 +250,8 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                     "linux",
                     "windows",
                     "preview-breaking-changes-supported",
+                    "build-mode",
+                    "run-mode"
                 ]:
                     if cond_features in test.config.available_features:
                         conditions[cond_features] = True
