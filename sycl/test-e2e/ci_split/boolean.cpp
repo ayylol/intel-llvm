@@ -1,7 +1,7 @@
 // RUN: %if build-mode %{ echo "build-mode set" %}
 // RUN: %if run-mode %{ echo "run-mode set" %}
-// RUN: %if build-mode %{ %{build} -o %t.out %}
-// RUN: %if run-mode %{ %{run} %t.out %}
+// RUN: %{build} -o %t.out
+// RUN: %{run} %t.out
 #include <cassert>
 #include <iostream>
 

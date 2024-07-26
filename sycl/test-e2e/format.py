@@ -229,9 +229,19 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 continue
 
             if "%{run}" not in directive.command:
-                new_script.append(directive)
+                if "%{build}" in directive.command or "%clangxx" in directive.command or "%clang" in directive.command:
+                    if "build-mode" in test.config.available_features:
+                        new_script.append(directive)
+                # TODO: May capture more than i intend
+                elif "%t.out" in directive.command:
+                    if "run-mode" in test.config.available_features:
+                        new_script.append(directive)
+                else:
+                    new_script.append(directive)
                 continue
 
+            if "run-mode" not in test.config.available_features:
+                continue
             for sycl_device in devices_for_test:
                 expanded = "env"
 
@@ -272,6 +282,8 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                     )
                 )
         script = new_script
+        #for directive in script:
+        #    print(directive.command)
 
         conditions = {feature: True for feature in test.config.available_features}
         script = lit.TestRunner.applySubstitutions(

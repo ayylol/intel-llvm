@@ -16,6 +16,29 @@ from lit.llvm.subst import ToolSubst, FindTool
 
 # Configuration file for the 'lit' test runner.
 
+# Find from environment build/run mode
+#################################################
+build=False
+run=False
+if "TEST_MODE" in os.environ:
+  mode=os.environ["TEST_MODE"]
+  if mode=="build":
+    build=True
+  elif mode=="run":
+    run=True
+  elif mode=="both":
+    build=True
+    run=True
+else:
+  build=True
+  run=True
+  
+if build:
+  config.available_features.add("build-mode")
+if run:
+  config.available_features.add("run-mode")
+#################################################
+
 # name: The name of this test suite.
 config.name = "SYCL"
 
