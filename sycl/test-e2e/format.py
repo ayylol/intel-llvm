@@ -156,9 +156,13 @@ class SYCLEndToEndTest(lit.formats.ShTest):
 
         devices_for_test = self.select_devices_for_test(test)
         if not devices_for_test:
-            return lit.Test.Result(
-                lit.Test.UNSUPPORTED, "No supported devices to run the test on"
-            )
+            if "build-mode" in test.config.available_features and "run-mode" not in test.config.available_features:
+                devices_for_test.append("opencl:cpu")
+            else:
+                return lit.Test.Result(
+                    lit.Test.UNSUPPORTED,
+                    "No supported devices to run the test on"
+                )
 
         substitutions = lit.TestRunner.getDefaultSubstitutions(test, tmpDir, tmpBase)
         triples = set()
