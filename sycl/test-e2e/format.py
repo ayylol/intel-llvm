@@ -234,7 +234,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
 
             if "%{run}" not in directive.command:
                 if "%{build}" in directive.command or "%clangxx" in directive.command or "%clang" in directive.command:
-                    if "build-mode" not in test.config.available_features:
+                    if "build-mode" not in test.config.available_features and "%if run-mode" not in directive.command:
                         directive.command=""
                 # TODO: May capture more than i intend
                 elif "%t" in directive.command:
