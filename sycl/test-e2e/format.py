@@ -156,7 +156,10 @@ class SYCLEndToEndTest(lit.formats.ShTest):
 
         devices_for_test = self.select_devices_for_test(test)
         if not devices_for_test:
-            if "build-mode" in test.config.available_features and "run-mode" not in test.config.available_features:
+            # If exclusively in build mode, and no devices are supported,
+            # add a dummy device to pretend that it is supported.
+            if ("build-mode" in test.config.available_features and
+                "run-mode" not in test.config.available_features):
                 devices_for_test.append("opencl:cpu")
             else:
                 return lit.Test.Result(
@@ -233,10 +236,12 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 continue
 
             if "%{run}" not in directive.command:
-                if "%{build}" in directive.command or "%clangxx" in directive.command or "%clang" in directive.command:
-                    if "build-mode" not in test.config.available_features and "%if run-mode" not in directive.command:
+                if ("%{build}" in directive.command or
+                    "%clangxx" in directive.command or
+                    "%clang" in directive.command):
+                    if ("build-mode" not in test.config.available_features and
+                        "%if run-mode" not in directive.command):
                         directive.command=""
-                # TODO: May capture more than i intend
                 elif "%t" in directive.command:
                     if "run-mode" not in test.config.available_features:
                         directive.command=""
