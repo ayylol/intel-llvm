@@ -236,6 +236,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 continue
 
             if "%{run}" not in directive.command:
+                '''
                 if ("%{build}" in directive.command or
                     "%clangxx" in directive.command or
                     "%clang" in directive.command):
@@ -243,6 +244,16 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                         "%if run-mode" not in directive.command):
                         directive.command=""
                 elif "%t" in directive.command:
+                    if "run-mode" not in test.config.available_features:
+                        directive.command=""
+                '''
+                # Build
+                if ("%{run-unfiltered-devices}" not in directive.command):
+                    if ("build-mode" not in test.config.available_features and
+                        "%if run-mode" not in directive.command):
+                        directive.command=""
+                # Run
+                else:
                     if "run-mode" not in test.config.available_features:
                         directive.command=""
                 new_script.append(directive)
