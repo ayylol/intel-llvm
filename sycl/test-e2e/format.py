@@ -155,17 +155,11 @@ class SYCLEndToEndTest(lit.formats.ShTest):
             return script
 
         devices_for_test = self.select_devices_for_test(test)
-        if not devices_for_test:
-            # If exclusively in build mode, and no devices are supported,
-            # add a dummy device to pretend that it is supported.
-            if ("build-mode" in test.config.available_features and
-                "run-mode" not in test.config.available_features):
-                devices_for_test.append("opencl:cpu")
-            else:
-                return lit.Test.Result(
-                    lit.Test.UNSUPPORTED,
-                    "No supported devices to run the test on"
-                )
+        if not devices_for_test and "run_mode" in test.config.available_features:
+            return lit.Test.Result(
+                lit.Test.UNSUPPORTED,
+                "No supported devices to run the test on"
+            )
 
         substitutions = lit.TestRunner.getDefaultSubstitutions(test, tmpDir, tmpBase)
         triples = set()
@@ -173,7 +167,10 @@ class SYCLEndToEndTest(lit.formats.ShTest):
             (backend, _) = sycl_device.split(":")
             triples.add(get_triple(test, backend))
 
-        substitutions.append(("%{sycl_triple}", format(",".join(triples))))
+        if "run_mode" in test.config.available_features:
+            substitutions.append(("%{sycl_triple}", format(",".join(triples))))
+        else:
+            substitutions.append(("%{sycl_triple}", "spir64,nvptx64-nvidia-cuda"))
         # -fsycl-targets is needed for CUDA/HIP, so just use it be default so
         # -that new tests by default would runnable there (unless they have
         # -other restrictions).
@@ -307,7 +304,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
             test, litConfig, useExternalSh, script, tmpBase
         )
 
-        if len(devices_for_test) > 1:
+        if len(devices_for_test) != 1:
             return result
 
         # Single device - might be an XFAIL.
