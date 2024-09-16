@@ -101,6 +101,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
     def select_devices_for_test(self, test):
         devices = []
         for d in test.config.sycl_devices:
+            #print(d)
             features = test.config.sycl_dev_features[d]
             if test.getMissingRequiredFeaturesFromList(features):
                 continue
@@ -155,7 +156,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
             return script
 
         devices_for_test = self.select_devices_for_test(test)
-        if not devices_for_test and "run_mode" in test.config.available_features:
+        if not devices_for_test and "run-mode" in test.config.available_features:
             return lit.Test.Result(
                 lit.Test.UNSUPPORTED,
                 "No supported devices to run the test on"
@@ -163,14 +164,30 @@ class SYCLEndToEndTest(lit.formats.ShTest):
 
         substitutions = lit.TestRunner.getDefaultSubstitutions(test, tmpDir, tmpBase)
         triples = set()
-        for sycl_device in devices_for_test:
-            (backend, _) = sycl_device.split(":")
-            triples.add(get_triple(test, backend))
-
-        if "run_mode" in test.config.available_features:
-            substitutions.append(("%{sycl_triple}", format(",".join(triples))))
+        if "run-mode" in test.config.available_features:
+            #print("Triple automatically set")
+            for sycl_device in devices_for_test:
+                (backend, _) = sycl_device.split(":")
+                triples.add(get_triple(test, backend))
         else:
-            substitutions.append(("%{sycl_triple}", "spir64,nvptx64-nvidia-cuda"))
+            # This is 100% not robust enough
+            def in_nested(a, b):
+                for c in b:
+                    if a in c:
+                        return True
+                return False
+            #print("Triple manually set")
+            if (in_nested("opencl", test.requires) or
+                ("opencl" not in test.config.unsupported_features
+                 and len(test.requires)==0)):
+                triples.add("spir64")
+            if (in_nested("cuda", test.requires) or
+                ("cuda" not in test.config.unsupported_features
+                 and len(test.requires)==0)):
+                triples.add("nvptx64-nvidia-cuda")
+        #print(triples)
+
+        substitutions.append(("%{sycl_triple}", format(",".join(triples))))
         # -fsycl-targets is needed for CUDA/HIP, so just use it be default so
         # -that new tests by default would runnable there (unless they have
         # -other restrictions).
