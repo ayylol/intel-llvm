@@ -101,6 +101,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
     def select_devices_for_test(self, test):
         devices = []
         for d in test.config.sycl_devices:
+            #print(d)
             features = test.config.sycl_dev_features[d]
             if test.getMissingRequiredFeaturesFromList(features):
                 continue
@@ -155,23 +156,36 @@ class SYCLEndToEndTest(lit.formats.ShTest):
             return script
 
         devices_for_test = self.select_devices_for_test(test)
-        if not devices_for_test:
-            # If exclusively in build mode, and no devices are supported,
-            # add a dummy device to pretend that it is supported.
-            if ("build-mode" in test.config.available_features and
-                "run-mode" not in test.config.available_features):
-                devices_for_test.append("opencl:cpu")
-            else:
-                return lit.Test.Result(
-                    lit.Test.UNSUPPORTED,
-                    "No supported devices to run the test on"
-                )
+        if not devices_for_test and "run-mode" in test.config.available_features:
+            return lit.Test.Result(
+                lit.Test.UNSUPPORTED,
+                "No supported devices to run the test on"
+            )
 
         substitutions = lit.TestRunner.getDefaultSubstitutions(test, tmpDir, tmpBase)
         triples = set()
-        for sycl_device in devices_for_test:
-            (backend, _) = sycl_device.split(":")
-            triples.add(get_triple(test, backend))
+        if "run-mode" in test.config.available_features:
+            #print("Triple automatically set")
+            for sycl_device in devices_for_test:
+                (backend, _) = sycl_device.split(":")
+                triples.add(get_triple(test, backend))
+        else:
+            # This is 100% not robust enough
+            def in_nested(a, b):
+                for c in b:
+                    if a in c:
+                        return True
+                return False
+            #print("Triple manually set")
+            if (in_nested("opencl", test.requires) or
+                ("opencl" not in test.config.unsupported_features
+                 and len(test.requires)==0)):
+                triples.add("spir64")
+            if (in_nested("cuda", test.requires) or
+                ("cuda" not in test.config.unsupported_features
+                 and len(test.requires)==0)):
+                triples.add("nvptx64-nvidia-cuda")
+        #print(triples)
 
         substitutions.append(("%{sycl_triple}", format(",".join(triples))))
         # -fsycl-targets is needed for CUDA/HIP, so just use it be default so
@@ -302,7 +316,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
             test, litConfig, useExternalSh, script, tmpBase
         )
 
-        if len(devices_for_test) > 1:
+        if len(devices_for_test) != 1:
             return result
 
         # Single device - might be an XFAIL.
