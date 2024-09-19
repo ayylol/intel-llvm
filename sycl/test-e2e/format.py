@@ -185,6 +185,8 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 ("cuda" not in test.config.unsupported_features
                  and len(test.requires)==0)):
                 triples.add("nvptx64-nvidia-cuda")
+            if (len(triples)==0): #FALL BACK
+                triples = {"spir64", "nvptx64-nvidia-cuda"}
         #print(triples)
 
         substitutions.append(("%{sycl_triple}", format(",".join(triples))))
