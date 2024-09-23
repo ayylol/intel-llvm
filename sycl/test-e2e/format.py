@@ -163,7 +163,8 @@ class SYCLEndToEndTest(lit.formats.ShTest):
             elif "TEMPORARY_DISABLED" in test.requires:
                 build_unsupported=True
             elif (("linux" in test.config.available_features and
-                      ("windows" in test.requires or
+                      ("windows" in test.requires or 
+                       "system-windows" in test.requires or
                        "linux" in test.config.unsupported_features))
                      or "windows" in test.config.available_features and
                       ("linux" in test.requires or
