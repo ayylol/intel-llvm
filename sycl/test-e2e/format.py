@@ -155,6 +155,18 @@ class SYCLEndToEndTest(lit.formats.ShTest):
         if isinstance(script, lit.Test.Result):
             return script
 
+        # unsupported for build-mode
+        if "build-mode" in test.config.available_features:
+            build_unsupported=False
+            if "run-mode" in test.requires:
+                build_unsupported=True
+            if build_unsupported:
+                return lit.Test.Result(
+                    lit.Test.UNSUPPORTED,
+                    "Test unsupported when only in build mode"
+                )
+
+
         devices_for_test = self.select_devices_for_test(test)
         if not devices_for_test and "run-mode" in test.config.available_features:
             return lit.Test.Result(
@@ -170,24 +182,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 (backend, _) = sycl_device.split(":")
                 triples.add(get_triple(test, backend))
         else:
-            # This is 100% not robust enough
-            def in_nested(a, b):
-                for c in b:
-                    if a in c:
-                        return True
-                return False
-            #print("Triple manually set")
-            if (in_nested("opencl", test.requires) or
-                ("opencl" not in test.config.unsupported_features
-                 and len(test.requires)==0)):
-                triples.add("spir64")
-            if (in_nested("cuda", test.requires) or
-                ("cuda" not in test.config.unsupported_features
-                 and len(test.requires)==0)):
-                triples.add("nvptx64-nvidia-cuda")
-            if (len(triples)==0): #FALL BACK
-                triples = {"spir64", "nvptx64-nvidia-cuda"}
-        #print(triples)
+            triples = {"spir64"}
 
         substitutions.append(("%{sycl_triple}", format(",".join(triples))))
         # -fsycl-targets is needed for CUDA/HIP, so just use it be default so
