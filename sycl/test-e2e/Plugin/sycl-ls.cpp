@@ -1,6 +1,7 @@
-// RUN: sycl-ls --verbose | awk '{print}/Unsupported Platforms:/{exit}' | grep "Device \[" | wc -l >%t.verbose.out
-// RUN: sycl-ls | wc -l >%t.concise.out
-// RUN: diff %t.verbose.out %t.concise.out
+// REQUIRED: run-mode
+// RUN: %if run-mode %{ sycl-ls --verbose | awk '{print}/Unsupported Platforms:/{exit}' | grep "Device \[" | wc -l >%t.verbose.out %}
+// RUN: %if run-mode %{ sycl-ls | wc -l >%t.concise.out %}
+// RUN: %if run-mode %{ diff %t.verbose.out %t.concise.out %}
 
 //==---- sycl-ls.cpp - SYCL test for consistency of sycl-ls output ---------==//
 //
