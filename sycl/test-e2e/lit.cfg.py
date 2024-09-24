@@ -163,8 +163,6 @@ elif platform.system() == "Linux":
 config.substitutions.append(("%sycl_include", config.sycl_include))
 
 # Intel GPU FAMILY availability
-if lit_config.params.get("gpu-intel-gen9", False):
-    config.available_features.add("gpu-intel-gen9")
 if lit_config.params.get("gpu-intel-gen11", False):
     config.available_features.add("gpu-intel-gen11")
 if lit_config.params.get("gpu-intel-gen12", False):
@@ -380,7 +378,7 @@ if cl_options:
     config.substitutions.append(("%cxx_std_option", "/std:"))
     config.substitutions.append(("%fPIC", ""))
     config.substitutions.append(("%shared_lib", "/LD"))
-    config.substitutions.append(("%no_opt", "/Od"))
+    config.substitutions.append(("%O0", "/Od"))
 else:
     config.substitutions.append(
         (
@@ -405,7 +403,7 @@ else:
         ("%fPIC", ("" if platform.system() == "Windows" else "-fPIC"))
     )
     config.substitutions.append(("%shared_lib", "-shared"))
-    config.substitutions.append(("%no_opt", "-O0"))
+    config.substitutions.append(("%O0", "-O0"))
 
 # Check if user passed verbose-print parameter, if yes, add VERBOSE_PRINT macro
 if "verbose-print" in lit_config.params:
