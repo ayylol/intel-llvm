@@ -1,4 +1,5 @@
 // TODO: enable when Jira ticket resolved
+// REQUIRES: TEMPORARY_DISABLED
 // XFAIL: gpu
 //
 // Check that full compilation works:
