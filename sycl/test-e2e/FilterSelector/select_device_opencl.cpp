@@ -1,4 +1,4 @@
-// RUN: %{build} -o %t.out
+// RUN: %{build} -DSYCL2020_DISABLE_DEPRECATION_WARNINGS -o %t.out
 // RUN: env ONEAPI_DEVICE_SELECTOR='opencl:*' %{run-unfiltered-devices} %t.out
 //
 // Checks if only specified device types can be acquired from select_device

@@ -1,4 +1,4 @@
-// RUN: %{build} -o %t.out
+// RUN: %{build} -DSYCL2020_DISABLE_DEPRECATION_WARNINGS -o %t.out
 // RUN: env ONEAPI_DEVICE_SELECTOR="*:*" %{run-unfiltered-devices} %t.out
 // RUN: env ONEAPI_DEVICE_SELECTOR="*:cpu" %{run-unfiltered-devices} %t.out
 // RUN: env ONEAPI_DEVICE_SELECTOR=level_zero:gpu %{run-unfiltered-devices} %t.out
