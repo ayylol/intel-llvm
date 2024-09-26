@@ -163,7 +163,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
             elif "TEMPORARY_DISABLED" in test.requires:
                 build_unsupported=True
             elif (("linux" in test.config.available_features and
-                      ("windows" in test.requires or 
+                      ("windows" in test.requires or
                        "system-windows" in test.requires or
                        "linux" in test.config.unsupported_features))
                      or "windows" in test.config.available_features and
@@ -192,7 +192,48 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 (backend, _) = sycl_device.split(":")
                 triples.add(get_triple(test, backend))
         else:
-            triples = {"spir64"}
+            #from pprint import pprint
+            #pprint(vars(test.config))
+            #triples = {"spir64"}
+            requires_has_backend = False
+            for c in test.requires:
+                if ("cuda" in c or "hip" in c or "opencl" in c or "level_zero" in c):
+                    requires_has_backend = True
+            if requires_has_backend:
+                for c in test.requires:
+                    if "opencl" in c or "level_zero" in c: triples.add("spir64")
+                    if "cuda" in c: triples.add("nvptx64-nvidia-cuda")
+            else:
+                add_opencl = True
+                add_l0 = True
+                add_cuda = True
+                for c in test.unsupported:
+                    if "opencl" in c: add_opencl = False
+                    if "level_zero" in c: add_l0 = False
+                    if "cuda" in c: add_cuda = False
+                if add_l0 or add_opencl: triples.add("spir64")
+                if add_cuda: triples.add("nvptx64-nvidia-cuda")
+            # remove implicitly excluded backends
+            for c in test.config.unsupported_features:
+                #if "sg-" in c and "sg-32" not in c:
+                #    if "nvptx64-nvidia-cuda" in triples:
+                #        triples.remove("nvptx64-nvidia-cuda")
+                if "gpu" in c:
+                    if "nvptx64-nvidia-cuda" in triples:
+                        triples.remove("nvptx64-nvidia-cuda")
+            for c in test.requires:
+                if ("gpu-intel-gen12" in c or "aspect-ext_intel_matrix" in c
+                    or "accelerator" in c or "cpu" in c):
+                    triples = {"spir64"}
+                if ("aspect-ext_oneapi_cuda_cluster_group" in c):
+                    triples = {"nvptx64-nvidia-cuda"}
+                if "sg-" in c and "sg-32" not in c:
+                    if "nvptx64-nvidia-cuda" in triples:
+                        triples.remove("nvptx64-nvidia-cuda")
+            for c in test.xfails:
+                if ("cuda" in c):
+                    if "nvptx64-nvidia-cuda" in triples:
+                        triples.remove("nvptx64-nvidia-cuda")
 
         substitutions.append(("%{sycl_triple}", format(",".join(triples))))
         # -fsycl-targets is needed for CUDA/HIP, so just use it be default so
