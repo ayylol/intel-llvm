@@ -1,7 +1,7 @@
 // REQUIRES: cuda
 
-// RUN: sycl-ls --verbose >%t.cuda.out
-// RUN: FileCheck %s --input-file %t.cuda.out
+// RUN: %if run-mode %{ sycl-ls --verbose >%t.cuda.out %}
+// RUN: %if run-mode %{ FileCheck %s --input-file %t.cuda.out %}
 
 //==---- sycl-ls-banned.cpp - Check sycl-ls output of banned platforms. --==//
 //
