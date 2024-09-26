@@ -194,7 +194,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
         else:
             #from pprint import pprint
             #pprint(vars(test.config))
-            #triples = {"spir64"}
+            #triples = {"amdgcn-amd-amdhsa"}
             requires_has_backend = False
             for c in test.requires:
                 if ("cuda" in c or "hip" in c or "opencl" in c or "level_zero" in c):
@@ -203,16 +203,20 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 for c in test.requires:
                     if "opencl" in c or "level_zero" in c: triples.add("spir64")
                     if "cuda" in c: triples.add("nvptx64-nvidia-cuda")
+                    if "hip" in c: triples.add("amdgcn-amd-amdhsa")
             else:
                 add_opencl = True
                 add_l0 = True
                 add_cuda = True
+                add_hip = True
                 for c in test.unsupported:
                     if "opencl" in c: add_opencl = False
                     if "level_zero" in c: add_l0 = False
                     if "cuda" in c: add_cuda = False
+                    if "hip" in c: add_hip = False
                 if add_l0 or add_opencl: triples.add("spir64")
                 if add_cuda: triples.add("nvptx64-nvidia-cuda")
+                if add_hip: triples.add("amdgcn-amd-amdhsa")
             # remove implicitly excluded backends
             for c in test.config.unsupported_features:
                 #if "sg-" in c and "sg-32" not in c:

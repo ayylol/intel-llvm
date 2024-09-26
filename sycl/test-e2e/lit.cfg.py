@@ -552,7 +552,7 @@ if "cuda:gpu" in config.sycl_devices:
         config.cuda_include = os.path.join(os.environ["CUDA_PATH"], "include")
 
 # FIXME: This needs to be made per-device as well, possibly with a helper.
-if "hip:gpu" in config.sycl_devices and config.hip_platform == "AMD":
+if (build and not run) or ("hip:gpu" in config.sycl_devices and config.hip_platform == "AMD"):
     if not config.amd_arch:
         lit_config.error(
             "Cannot run tests for HIP without an offload-arch. Please "
@@ -580,7 +580,7 @@ else:
     config.substitutions.append(
         (
             "%clangxx",
-            " " + config.dpcpp_compiler + " " + config.cxx_flags + " " + arch_flag,
+            " " + config.dpcpp_compiler + " " + config.cxx_flags + " " + arch_flag + " -Wno-unused-command-line-argument ",
         )
     )
     config.substitutions.append(
