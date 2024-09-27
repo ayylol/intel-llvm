@@ -219,11 +219,12 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                     if "hip" in c: add_hip = False
 
             # remove implicitly excluded backends
+            #print("ocl ", add_opencl, " l0 ", add_l0, " cuda ", add_cuda, " hip ", add_hip)
             for c in test.config.unsupported_features:
                 if "gpu" in c: add_cuda = False; add_hip = False
             for c in test.requires:
                 if ("gpu-intel-gen12" in c or "aspect-ext_intel_matrix" in c
-                    or "accelerator" in c or "cpu" in c):
+                    or "accelerator" in c or ("cpu" in c and not "native_cpu" in c)):
                     add_opencl = True; add_hip = False; add_cuda = False
                 if ("aspect-ext_oneapi_cuda_cluster_group" in c): add_cuda=True
                 if "sg-" in c and "sg-32" not in c: 
