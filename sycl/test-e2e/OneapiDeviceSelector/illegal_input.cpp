@@ -1,5 +1,5 @@
 
-// RUN: %clangxx -fsycl -fsycl-targets=%{sycl_triple} %S/Inputs/trivial.cpp -o %t.out
+// RUN: %clangxx %{amd_arch} -fsycl -fsycl-targets=%{sycl_triple} %S/Inputs/trivial.cpp -o %t.out
 // RUN: not env ONEAPI_DEVICE_SELECTOR="macaroni:*" %{run-unfiltered-devices} %t.out
 // RUN: not env ONEAPI_DEVICE_SELECTOR=":" %{run-unfiltered-devices} %t.out
 // RUN: not env ONEAPI_DEVICE_SELECTOR="level_zero:." %{run-unfiltered-devices} %t.out
