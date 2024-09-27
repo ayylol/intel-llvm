@@ -226,10 +226,12 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                     or "accelerator" in c or "cpu" in c):
                     add_opencl = True; add_hip = False; add_cuda = False
                 if ("aspect-ext_oneapi_cuda_cluster_group" in c): add_cuda=True
-                if "sg-" in c and "sg-32" not in c: add_cuda = False
+                if "sg-" in c and "sg-32" not in c: 
+                    add_cuda = False; add_hip = False
                 if "gfx90a" in c: add_gfx1031 = False
             for c in test.xfails:
                 if ("cuda" in c): add_cuda = False
+                if ("hip" in c): add_hip = False
             if add_l0 or add_opencl: triples.add("spir64")
             if add_cuda: triples.add("nvptx64-nvidia-cuda")
             if add_hip: 
