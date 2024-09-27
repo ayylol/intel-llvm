@@ -185,6 +185,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
             )
 
         substitutions = lit.TestRunner.getDefaultSubstitutions(test, tmpDir, tmpBase)
+        amd_arch = ""
         triples = set()
         if "run-mode" in test.config.available_features:
             #print("Triple automatically set")
@@ -192,52 +193,52 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 (backend, _) = sycl_device.split(":")
                 triples.add(get_triple(test, backend))
         else:
-            #from pprint import pprint
-            #pprint(vars(test.config))
-            #triples = {"amdgcn-amd-amdhsa"}
+            add_opencl = True; add_l0 = True
+            add_cuda = True; add_hip = True
+            add_gfx1031 = True; add_gfx90a = True
+
             requires_has_backend = False
             for c in test.requires:
-                if ("cuda" in c or "hip" in c or "opencl" in c or "level_zero" in c):
+                if ("cuda" in c or "hip" in c 
+                    or "opencl" in c or "level_zero" in c):
                     requires_has_backend = True
+
             if requires_has_backend:
+                add_opencl = False; add_l0 = False
+                add_cuda = False; add_hip = False
                 for c in test.requires:
-                    if "opencl" in c or "level_zero" in c: triples.add("spir64")
-                    if "cuda" in c: triples.add("nvptx64-nvidia-cuda")
-                    if "hip" in c: triples.add("amdgcn-amd-amdhsa")
+                    if "opencl" in c: add_opencl = True
+                    if "level_zero" in c: add_l0 = True
+                    if "cuda" in c: add_cuda = True
+                    if "hip" in c: add_hip = True
             else:
-                add_opencl = True
-                add_l0 = True
-                add_cuda = True
-                add_hip = True
                 for c in test.unsupported:
                     if "opencl" in c: add_opencl = False
                     if "level_zero" in c: add_l0 = False
                     if "cuda" in c: add_cuda = False
                     if "hip" in c: add_hip = False
-                if add_l0 or add_opencl: triples.add("spir64")
-                if add_cuda: triples.add("nvptx64-nvidia-cuda")
-                if add_hip: triples.add("amdgcn-amd-amdhsa")
+
             # remove implicitly excluded backends
             for c in test.config.unsupported_features:
-                #if "sg-" in c and "sg-32" not in c:
-                #    if "nvptx64-nvidia-cuda" in triples:
-                #        triples.remove("nvptx64-nvidia-cuda")
-                if "gpu" in c:
-                    if "nvptx64-nvidia-cuda" in triples:
-                        triples.remove("nvptx64-nvidia-cuda")
+                if "gpu" in c: add_cuda = False; add_hip = False
             for c in test.requires:
                 if ("gpu-intel-gen12" in c or "aspect-ext_intel_matrix" in c
                     or "accelerator" in c or "cpu" in c):
-                    triples = {"spir64"}
-                if ("aspect-ext_oneapi_cuda_cluster_group" in c):
-                    triples = {"nvptx64-nvidia-cuda"}
-                if "sg-" in c and "sg-32" not in c:
-                    if "nvptx64-nvidia-cuda" in triples:
-                        triples.remove("nvptx64-nvidia-cuda")
+                    add_opencl = True; add_hip = False; add_cuda = False
+                if ("aspect-ext_oneapi_cuda_cluster_group" in c): add_cuda=True
+                if "sg-" in c and "sg-32" not in c: add_cuda = False
+                if "gfx90a" in c: add_gfx1031 = False
             for c in test.xfails:
-                if ("cuda" in c):
-                    if "nvptx64-nvidia-cuda" in triples:
-                        triples.remove("nvptx64-nvidia-cuda")
+                if ("cuda" in c): add_cuda = False
+            if add_l0 or add_opencl: triples.add("spir64")
+            if add_cuda: triples.add("nvptx64-nvidia-cuda")
+            if add_hip: 
+                amd_arch="-Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch="
+                triples.add("amdgcn-amd-amdhsa")
+                if add_gfx1031: amd_arch=amd_arch+"gfx1031"
+                elif add_gfx90a: amd_arch=amd_arch+"gfx90a"
+                else: print("ERROR: no AMD architecture!!!!"); exit()
+            substitutions.append(("%{amd_arch}", amd_arch))
 
         substitutions.append(("%{sycl_triple}", format(",".join(triples))))
         # -fsycl-targets is needed for CUDA/HIP, so just use it be default so
@@ -246,7 +247,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
         substitutions.append(
             (
                 "%{build}",
-                "%clangxx -fsycl -fsycl-targets=%{sycl_triple} %verbose_print %s",
+                "%clangxx %{amd_arch} -fsycl -fsycl-targets=%{sycl_triple} %verbose_print %s",
             )
         )
         if platform.system() == "Windows":
