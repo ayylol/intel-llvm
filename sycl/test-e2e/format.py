@@ -56,6 +56,7 @@ def parse_min_intel_driver_req(line_number, line, output):
 
 
 class SYCLEndToEndTest(lit.formats.ShTest):
+    #cached_script=[]
     def parseTestScript(self, test):
         """This is based on lit.TestRunner.parseIntegratedTestScript but we
         overload the semantics of REQUIRES/UNSUPPORTED/XFAIL directives so have
@@ -79,6 +80,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
         script = parsed["RUN:"] or []
         assert parsed["DEFINE:"] == script
         assert parsed["REDEFINE:"] == script
+        assert parsed["BUILD:"] == script
 
         test.xfails += parsed["XFAIL:"] or []
         test.requires += test.config.required_features
@@ -221,7 +223,8 @@ class SYCLEndToEndTest(lit.formats.ShTest):
             # remove implicitly excluded backends
             #print("ocl ", add_opencl, " l0 ", add_l0, " cuda ", add_cuda, " hip ", add_hip)
             for c in test.config.unsupported_features:
-                if "gpu" in c: add_cuda = False; add_hip = False
+                if "gpu" in c and "gpu-intel-dg2" not in c: 
+                    add_cuda = False; add_hip = False
             for c in test.requires:
                 if ("gpu-intel-gen12" in c or "aspect-ext_intel_matrix" in c
                     or "accelerator" in c or ("cpu" in c and not "native_cpu" in c)):
@@ -241,7 +244,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 if add_gfx1031: amd_arch=amd_arch+"gfx1031"
                 elif add_gfx90a: amd_arch=amd_arch+"gfx90a"
                 else: print("ERROR: no AMD architecture!!!!"); exit()
-            substitutions.append(("%{amd_arch}", amd_arch))
+        substitutions.append(("%{amd_arch}", amd_arch))
 
         substitutions.append(("%{sycl_triple}", format(",".join(triples))))
         # -fsycl-targets is needed for CUDA/HIP, so just use it be default so
@@ -300,7 +303,22 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 new_script.append(directive)
                 continue
 
+            #from pprint import pprint
+            #pprint(vars(directive))
+            if ("run-mode" not in test.config.available_features and
+                directive.keyword == "RUN:"):
+                directive.command=""
+                new_script.append(directive)
+                continue
+            if ("build-mode" not in test.config.available_features and
+                directive.keyword == "BUILD:"):
+                directive.command=""
+                new_script.append(directive)
+                continue
+
             if "%{run}" not in directive.command:
+                # ORIGINAL HEURISTIC
+                """
                 # Build
                 if ("%{run-unfiltered-devices}" not in directive.command):
                     if ("build-mode" not in test.config.available_features and
@@ -310,13 +328,16 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 else:
                     if "run-mode" not in test.config.available_features:
                         directive.command=""
+                """
                 new_script.append(directive)
                 continue
 
+            """
             if "run-mode" not in test.config.available_features:
                 directive.command=""
                 new_script.append(directive)
                 continue
+            """
             for sycl_device in devices_for_test:
                 expanded = "env"
 

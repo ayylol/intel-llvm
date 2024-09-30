@@ -2051,6 +2051,7 @@ def _parseKeywords(sourcepath, additional_parsers=[], require_script=True):
     script = []
     builtin_parsers = [
         IntegratedTestKeywordParser("RUN:", ParserKind.COMMAND, initial_value=script),
+        IntegratedTestKeywordParser("BUILD:", ParserKind.COMMAND, initial_value=script),
         IntegratedTestKeywordParser("XFAIL:", ParserKind.BOOLEAN_EXPR),
         IntegratedTestKeywordParser("REQUIRES:", ParserKind.BOOLEAN_EXPR),
         IntegratedTestKeywordParser("UNSUPPORTED:", ParserKind.BOOLEAN_EXPR),
