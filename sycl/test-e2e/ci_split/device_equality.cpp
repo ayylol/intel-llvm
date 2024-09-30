@@ -1,6 +1,5 @@
 // : %if build-mode %{ echo "build-mode set" %}
 // : %if run-mode %{ echo "run-mode set" %}
-// DEFINE: %{GLIMBOG}=glog
 // BUILD: %{build} -o %t.out
 // RUN: %{run} %t.out
 

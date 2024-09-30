@@ -56,7 +56,6 @@ def parse_min_intel_driver_req(line_number, line, output):
 
 
 class SYCLEndToEndTest(lit.formats.ShTest):
-    #cached_script=[]
     def parseTestScript(self, test):
         """This is based on lit.TestRunner.parseIntegratedTestScript but we
         overload the semantics of REQUIRES/UNSUPPORTED/XFAIL directives so have
@@ -303,8 +302,6 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 new_script.append(directive)
                 continue
 
-            #from pprint import pprint
-            #pprint(vars(directive))
             if ("run-mode" not in test.config.available_features and
                 directive.keyword == "RUN:"):
                 directive.command=""
@@ -317,27 +314,9 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 continue
 
             if "%{run}" not in directive.command:
-                # ORIGINAL HEURISTIC
-                """
-                # Build
-                if ("%{run-unfiltered-devices}" not in directive.command):
-                    if ("build-mode" not in test.config.available_features and
-                        "%if run-mode" not in directive.command):
-                        directive.command=""
-                # Run
-                else:
-                    if "run-mode" not in test.config.available_features:
-                        directive.command=""
-                """
                 new_script.append(directive)
                 continue
 
-            """
-            if "run-mode" not in test.config.available_features:
-                directive.command=""
-                new_script.append(directive)
-                continue
-            """
             for sycl_device in devices_for_test:
                 expanded = "env"
 
