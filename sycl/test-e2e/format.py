@@ -98,6 +98,83 @@ class SYCLEndToEndTest(lit.formats.ShTest):
         except ValueError as e:
             raise ValueError("Error in UNSUPPORTED list:\n%s" % str(e))
 
+    def select_triple_for_test(self, test):
+        # CHECK IF SUPPORTED
+        build_unsupported=False
+        if "run-mode" in test.requires:
+            build_unsupported=True
+        elif "TEMPORARY_DISABLED" in test.requires:
+            build_unsupported=True
+        elif (("linux" in test.config.available_features and
+                  ("windows" in test.requires or
+                   "system-windows" in test.requires or
+                   "linux" in test.config.unsupported_features))
+                 or "windows" in test.config.available_features and
+                  ("linux" in test.requires or
+                   "windows" in test.config.unsupported_features)):
+            build_unsupported=True
+        if build_unsupported:
+            return [],""
+        #########################
+        # Check Triples
+        """
+        possible_triples = ["spir64", "nvptx64-nvidia-cuda", "amdgcn-amd-amdhsa"]
+        for triple in triples:
+            pass
+        triples=[]
+        """
+        amd_arch=""
+        triples = set()
+        add_opencl = True; add_l0 = True
+        add_cuda = True; add_hip = True
+        add_gfx1031 = True; add_gfx90a = True
+
+        requires_has_backend = False
+        for c in test.requires:
+            if ("cuda" in c or "hip" in c 
+                or "opencl" in c or "level_zero" in c):
+                requires_has_backend = True
+
+        if requires_has_backend:
+            add_opencl = False; add_l0 = False
+            add_cuda = False; add_hip = False
+            for c in test.requires:
+                if "opencl" in c: add_opencl = True
+                if "level_zero" in c: add_l0 = True
+                if "cuda" in c: add_cuda = True
+                if "hip" in c: add_hip = True
+        else:
+            for c in test.unsupported:
+                if "opencl" in c: add_opencl = False
+                if "level_zero" in c: add_l0 = False
+                if "cuda" in c: add_cuda = False
+                if "hip" in c: add_hip = False
+
+        # remove implicitly excluded backends
+        for c in test.config.unsupported_features:
+            if "gpu" in c: add_cuda = False; add_hip = False
+        for c in test.requires:
+            if ("gpu-intel-gen12" in c or "aspect-ext_intel_matrix" in c
+                or "accelerator" in c or ("cpu" in c and not "native_cpu" in c)):
+                add_opencl = True; add_hip = False; add_cuda = False
+            if ("aspect-ext_oneapi_cuda_cluster_group" in c): add_cuda=True
+            if "sg-" in c and "sg-32" not in c: 
+                add_cuda = False; add_hip = False
+            if "gfx90a" in c: add_gfx1031 = False
+        for c in test.xfails:
+            if ("cuda" in c): add_cuda = False
+            if ("hip" in c): add_hip = False
+        if add_l0 or add_opencl: triples.add("spir64")
+        if add_cuda: triples.add("nvptx64-nvidia-cuda")
+        if add_hip: 
+            amd_arch="-Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch="
+            triples.add("amdgcn-amd-amdhsa")
+            if add_gfx1031: amd_arch=amd_arch+"gfx1031"
+            elif add_gfx90a: amd_arch=amd_arch+"gfx90a"
+            else: print("ERROR: no AMD architecture!!!!"); exit()
+        #########################
+        return triples, amd_arch
+
     def select_devices_for_test(self, test):
         devices = []
         for d in test.config.sycl_devices:
@@ -156,92 +233,31 @@ class SYCLEndToEndTest(lit.formats.ShTest):
             return script
 
         # unsupported for build-mode
-        if "build-mode" in test.config.available_features:
-            build_unsupported=False
-            if "run-mode" in test.requires:
-                build_unsupported=True
-            elif "TEMPORARY_DISABLED" in test.requires:
-                build_unsupported=True
-            elif (("linux" in test.config.available_features and
-                      ("windows" in test.requires or
-                       "system-windows" in test.requires or
-                       "linux" in test.config.unsupported_features))
-                     or "windows" in test.config.available_features and
-                      ("linux" in test.requires or
-                       "windows" in test.config.unsupported_features)):
-                build_unsupported=True
-            if build_unsupported:
-                return lit.Test.Result(
-                    lit.Test.UNSUPPORTED,
-                    "Test unsupported when only in build mode"
-                )
-
-
-        devices_for_test = self.select_devices_for_test(test)
-        if not devices_for_test and "run-mode" in test.config.available_features:
-            return lit.Test.Result(
-                lit.Test.UNSUPPORTED,
-                "No supported devices to run the test on"
-            )
-
-        substitutions = lit.TestRunner.getDefaultSubstitutions(test, tmpDir, tmpBase)
-        amd_arch = ""
+        devices_for_test=[]
         triples = set()
-        if "run-mode" in test.config.available_features:
+        amd_arch = ""
+        if "build-mode" in test.config.available_features:
+            triples, amd_arch = self.select_triple_for_test(test)
+            if not triples:
+                return lit.Test.Result(lit.Test.UNSUPPORTED,
+                    "No supported backend to build for")
+        elif "run-mode" in test.config.available_features:
+            # TODO: SET THE AMD ARCHITECTURE
+            # amd_arch="something"
+            devices_for_test = self.select_devices_for_test(test)
+            if not devices_for_test:
+                return lit.Test.Result(lit.Test.UNSUPPORTED,
+                    "No supported devices to run the test on")
             #print("Triple automatically set")
             for sycl_device in devices_for_test:
                 (backend, _) = sycl_device.split(":")
                 triples.add(get_triple(test, backend))
-        else:
-            add_opencl = True; add_l0 = True
-            add_cuda = True; add_hip = True
-            add_gfx1031 = True; add_gfx90a = True
+        else: 
+            return lit.Test.Result(lit.Test.UNSUPPORTED,
+                "ERROR NO BUILD/RUN MODE SET")
 
-            requires_has_backend = False
-            for c in test.requires:
-                if ("cuda" in c or "hip" in c 
-                    or "opencl" in c or "level_zero" in c):
-                    requires_has_backend = True
-
-            if requires_has_backend:
-                add_opencl = False; add_l0 = False
-                add_cuda = False; add_hip = False
-                for c in test.requires:
-                    if "opencl" in c: add_opencl = True
-                    if "level_zero" in c: add_l0 = True
-                    if "cuda" in c: add_cuda = True
-                    if "hip" in c: add_hip = True
-            else:
-                for c in test.unsupported:
-                    if "opencl" in c: add_opencl = False
-                    if "level_zero" in c: add_l0 = False
-                    if "cuda" in c: add_cuda = False
-                    if "hip" in c: add_hip = False
-
-            # remove implicitly excluded backends
-            #print("ocl ", add_opencl, " l0 ", add_l0, " cuda ", add_cuda, " hip ", add_hip)
-            for c in test.config.unsupported_features:
-                if "gpu" in c: add_cuda = False; add_hip = False
-            for c in test.requires:
-                if ("gpu-intel-gen12" in c or "aspect-ext_intel_matrix" in c
-                    or "accelerator" in c or ("cpu" in c and not "native_cpu" in c)):
-                    add_opencl = True; add_hip = False; add_cuda = False
-                if ("aspect-ext_oneapi_cuda_cluster_group" in c): add_cuda=True
-                if "sg-" in c and "sg-32" not in c: 
-                    add_cuda = False; add_hip = False
-                if "gfx90a" in c: add_gfx1031 = False
-            for c in test.xfails:
-                if ("cuda" in c): add_cuda = False
-                if ("hip" in c): add_hip = False
-            if add_l0 or add_opencl: triples.add("spir64")
-            if add_cuda: triples.add("nvptx64-nvidia-cuda")
-            if add_hip: 
-                amd_arch="-Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch="
-                triples.add("amdgcn-amd-amdhsa")
-                if add_gfx1031: amd_arch=amd_arch+"gfx1031"
-                elif add_gfx90a: amd_arch=amd_arch+"gfx90a"
-                else: print("ERROR: no AMD architecture!!!!"); exit()
-            substitutions.append(("%{amd_arch}", amd_arch))
+        substitutions = lit.TestRunner.getDefaultSubstitutions(test, tmpDir, tmpBase)
+        substitutions.append(("%{amd_arch}", amd_arch))
 
         substitutions.append(("%{sycl_triple}", format(",".join(triples))))
         # -fsycl-targets is needed for CUDA/HIP, so just use it be default so
