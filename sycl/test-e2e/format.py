@@ -103,7 +103,9 @@ class SYCLEndToEndTest(lit.formats.ShTest):
         ### TODO: SHOULD BE DEFINED ELSEWHERE
         exceptions = {}
         exceptions["spir64"]={
-                "cuda":False, "opencl":True, "level_zero":True, "hip":False,
+                # OpenCL, and level_zero not defined as exceptions because it
+                # could be either of them
+                "cuda":False, "hip":False,
                 }
         exceptions["nvptx64-nvidia-cuda"]={
                 "cuda":True, "opencl":False, "level_zero":False, "hip":False,
@@ -144,6 +146,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 features.append(f)
             else:
                 pass
+        # TODO: Fix REQUIRES backend1 && backend2 situation
         return features
 
     def select_triple_for_test(self, test):
@@ -152,12 +155,15 @@ class SYCLEndToEndTest(lit.formats.ShTest):
         triples = set()
         possible_triples = ["spir64", "nvptx64-nvidia-cuda", "amdgcn-amd-amdhsa"]
         for triple in possible_triples:
-            unsupported= self.make_default_features_list(test.unsupported,triple,False)
-            required= self.make_default_features_list(test.requires,triple)
+            unsupported=self.make_default_features_list(test.unsupported,triple,False)
+            required=self.make_default_features_list(test.requires,triple)
+            xfails=self.make_default_features_list(test.xfails,triple,False)
             if test.getMissingRequiredFeaturesFromList(required):
                 continue
-
             if self.getMatchedFromList(unsupported, test.unsupported):
+                continue
+            if "*" in test.xfails or self.getMatchedFromList(xfails, test.xfails):
+                print("/".join(test.path_in_suite),"SHOULD HAVE XFAILED")
                 continue
             triples.add(triple)
         #TODO: ADD AMD ARCH CHOOSING
