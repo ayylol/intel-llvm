@@ -106,6 +106,7 @@ class SYCLEndToEndTest(lit.formats.ShTest):
                 # OpenCL, and level_zero not defined as exceptions because it
                 # could be either of them
                 "cuda":False, "hip":False,
+                "aspect-ext_oneapi_cuda_cluster_group": False
                 }
         exceptions["nvptx64-nvidia-cuda"]={
                 "cuda":True, "opencl":False, "level_zero":False, "hip":False,
@@ -115,7 +116,8 @@ class SYCLEndToEndTest(lit.formats.ShTest):
         exceptions["amdgcn-amd-amdhsa"]={
                 "cuda":False, "opencl":False, "level_zero":False, "hip":True,
                 "gpu":True, "cpu":False, "accelerator":False,
-                "sg-32":True, "sg-x":False
+                "sg-32":True, "sg-x":False,
+                "aspect-ext_oneapi_cuda_cluster_group": False
                 }
         exceptions["system"]={
                 "windows":False, "linux":True, "system-windows":False,
@@ -163,7 +165,6 @@ class SYCLEndToEndTest(lit.formats.ShTest):
             if self.getMatchedFromList(unsupported, test.unsupported):
                 continue
             if "*" in test.xfails or self.getMatchedFromList(xfails, test.xfails):
-                print("/".join(test.path_in_suite),"SHOULD HAVE XFAILED")
                 continue
             triples.add(triple)
         #TODO: ADD AMD ARCH CHOOSING
