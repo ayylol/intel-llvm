@@ -2,7 +2,7 @@
 //
 // RUN: %{build} -DBUILD_LIB -fPIC -shared -o %T/lib%basename_t.so
 
-// DEFINE: %{compile} = %{build} -DFNAME=%basename_t-ldl -Wl,-rpath=%T
+// DEFINE: %{compile} = %{build} -DFNAME=%basename_t -ldl -Wl,-rpath=%T
 
 // RUN: %{compile} -o %t1.out -DRUN_FIRST
 // RUN: env SYCL_UR_TRACE=2 %{run} %t1.out 2>&1 | FileCheck %s --check-prefixes=CHECK-FIRST,CHECK --implicit-check-not=piProgramBuild
@@ -61,7 +61,7 @@ void run() {
 }
 int main() {
 #ifdef RUN_FIRST
-  // CHECK-FIRST: urProgramBuild
+  // CHECK-FIRST: <--- urProgramBuild
   // CHECK-FIRST: Main: 2
   // CHECK-FIRST: Main: 2
   run();
@@ -77,21 +77,21 @@ int main() {
   *(void **)(&func) = dlsym(handle, "_Z3foov");
 
 #ifdef RUN_MIDDLE_BEFORE
-  // CHECK-MIDDLE-BEFORE: urProgramBuild
+  // CHECK-MIDDLE-BEFORE: <--- urProgramBuild
   // CHECK-MIDDLE-BEFORE: Main: 2
   // CHECK-MIDDLE-BEFORE: Main: 2
   run();
   run();
 #endif
 
-  // CHECK: urProgramBuild
+  // CHECK: <--- urProgramBuild
   // CHECK: Foo: 1
   // CHECK: Foo: 1
   assert(func() == 1);
   assert(func() == 1);
 
 #ifdef RUN_MIDDLE_AFTER
-  // CHECK-MIDDLE-AFTER: urProgramBuild
+  // CHECK-MIDDLE-AFTER: <--- urProgramBuild
   // CHECK-MIDDLE-AFTER: Main: 2
   // CHECK-MIDDLE-AFTER: Main: 2
   run();
@@ -101,7 +101,7 @@ int main() {
   dlclose(handle);
 
 #ifdef RUN_LAST
-  // CHECK-LAST: urProgramBuild
+  // CHECK-LAST: <--- urProgramBuild
   // CHECK-LAST: Main: 2
   // CHECK-LAST: Main: 2
   run();
