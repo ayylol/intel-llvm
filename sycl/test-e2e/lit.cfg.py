@@ -826,6 +826,15 @@ for sycl_device in config.sycl_devices:
     features.add(dev.replace("fpga", "accelerator"))
     # Use short names for LIT rules.
     features.add(be)
+    # Add corresponding triple feature
+    triple = {
+        "level_zero": "target-spir",
+        "opencl": "target-spir",
+        "cuda": "target-nvidia",
+        "hip": "target-amd",
+        "native_cpu": "target-native_cpu",
+    }[be]
+    features.add(triple)
 
     if be == "hip":
         if not config.amd_arch:
