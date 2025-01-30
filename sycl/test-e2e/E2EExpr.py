@@ -32,14 +32,15 @@ class E2EExpr(BooleanExpression):
         "false",
     }
 
-    def __init__(self, string, variables, build_only_mode, final_unknown_value):
+    def __init__(self, string, variables, build_only_mode, final_unknown_value, override_not_ignore):
         BooleanExpression.__init__(self, string, variables)
         self.build_only_mode = build_only_mode
         self.unknown = False
         self.final_unknown_value = final_unknown_value
+        self.build_specific_features = E2EExpr.build_specific_features if not override_not_ignore else override_not_ignore
 
     @staticmethod
-    def evaluate(string, variables, build_only_mode, final_unknown_value=True):
+    def evaluate(string, variables, build_only_mode, final_unknown_value=True, override_not_ignore = set()):
         """
         string: Expression to evaluate
         variables: variables that evaluate to true
@@ -48,7 +49,7 @@ class E2EExpr(BooleanExpression):
         """
         try:
             parser = E2EExpr(
-                string, set(variables), build_only_mode, final_unknown_value
+                string, set(variables), build_only_mode, final_unknown_value, override_not_ignore
             )
             return parser.parseAll()
         except ValueError as e:

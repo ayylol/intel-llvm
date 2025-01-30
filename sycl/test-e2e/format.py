@@ -118,6 +118,27 @@ class SYCLEndToEndTest(lit.formats.ShTest):
 
     getMatchedXFail = getMatchedUnsupported
 
+    def verify_requirements(self, test):
+        print("VERIFYING REQUIREMENTS!")
+        all_triples = { "target-spir", "target-nvidia", "target-amd", "target-native_cpu", }
+        not_ignore = all_triples.union({"true", "false"})
+        chosen_triples = set()
+        for t in all_triples:
+            if self.getMissingRequiresBuildOnly({t}, test.requires):
+                continue
+            if self.getMatchedUnsupportedBuildOnly({t}, test.unsupported):
+                continue
+            chosen_triples.add(t)
+        # Verify Requires
+        if not chosen_triples:
+            return False
+        # Verify Unsupported
+        if self.getMissingRequiresBuildOnly(chosen_triples, test.requires):
+            return False
+        if self.getMatchedUnsupportedBuildOnly(chosen_triples, test.unsupported):
+            return False
+        return True 
+
     def select_build_targets_for_test(self, test):
         supported_targets = set()
         for t in test.config.sycl_build_targets:
@@ -200,6 +221,11 @@ class SYCLEndToEndTest(lit.formats.ShTest):
         script = self.parseTestScript(test)
         if isinstance(script, lit.Test.Result):
             return script
+
+        if not self.verify_requirements(test):
+            return lit.Test.Result(
+                lit.Test.UNSUPPORTED, "FAULTY REQUIREMENTS!!!"
+            )
 
         devices_for_test = []
         build_targets = set()
