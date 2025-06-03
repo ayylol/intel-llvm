@@ -79,7 +79,6 @@
 #include <sycl/ext/oneapi/device_global/device_global.hpp>
 #include <sycl/ext/oneapi/device_global/properties.hpp>
 #include <sycl/ext/oneapi/experimental/address_cast.hpp>
-#include <sycl/ext/oneapi/experimental/annotated_arg/annotated_arg.hpp>
 #include <sycl/ext/oneapi/experimental/annotated_ptr/annotated_ptr.hpp>
 #include <sycl/ext/oneapi/experimental/annotated_usm/alloc_device.hpp>
 #include <sycl/ext/oneapi/experimental/annotated_usm/alloc_host.hpp>
