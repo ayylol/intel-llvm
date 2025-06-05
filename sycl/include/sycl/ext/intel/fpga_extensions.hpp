@@ -11,7 +11,6 @@
 #include <sycl/detail/stl_type_traits.hpp>
 #include <sycl/ext/intel/experimental/fpga_annotated_properties.hpp>
 #include <sycl/ext/intel/experimental/fpga_kernel_properties.hpp>
-#include <sycl/ext/intel/experimental/fpga_lsu.hpp>
 #include <sycl/ext/intel/experimental/fpga_mem/fpga_datapath.hpp>
 #include <sycl/ext/intel/experimental/fpga_mem/fpga_mem.hpp>
 #include <sycl/ext/intel/experimental/fpga_mem/properties.hpp>
@@ -21,6 +20,5 @@
 #include <sycl/ext/intel/fpga_device_selector.hpp>
 #include <sycl/ext/intel/fpga_dsp_control.hpp>
 #include <sycl/ext/intel/fpga_loop_fuse.hpp>
-#include <sycl/ext/intel/fpga_lsu.hpp>
 #include <sycl/ext/intel/fpga_reg.hpp>
 #include <sycl/ext/intel/pipes.hpp>
